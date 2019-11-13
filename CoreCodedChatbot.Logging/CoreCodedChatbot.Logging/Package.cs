@@ -25,8 +25,8 @@ namespace CoreCodedChatbot.Logging
                 {
                     ConnectionString = new SimpleLayout(secretService.GetSecret<string>("DbConnectionString"), ConfigurationItemFactory.Default),
                     CommandText =
-                        "INSERT INTO LogEntry(Level, LoggedAt, Message, Logger, Callsite, Exception, StackTrace, ProcessName) " +
-                        "VALUES(@Level, @LoggedAt, @Message, @Logger, @Callsite, @Exception, @StackTrace, @ProcessName);",
+                        "INSERT INTO LogEntry(Level, LoggedAt, Message, Logger, Callsite, Exception, StackTrace, ProcessName, AppDomain) " +
+                        "VALUES(@Level, @LoggedAt, @Message, @Logger, @Callsite, @Exception, @StackTrace, @ProcessName, @AppDomain);",
                     Parameters =
                     {
                         new DatabaseParameterInfo
@@ -68,6 +68,11 @@ namespace CoreCodedChatbot.Logging
                         {
                             Name = "@ProcessName",
                             Layout = new SimpleLayout("${processname}")
+                        },
+                        new DatabaseParameterInfo
+                        {
+                            Name = "@AppDomain",
+                            Layout = new SimpleLayout("${appdomain}")
                         }
                     },
                     DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"
@@ -77,10 +82,6 @@ namespace CoreCodedChatbot.Logging
 
                 config.AddTarget(dbTarget);
                 config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, "dbLog", "*");
-
-                var fileTarget = new ConsoleTarget("console");
-                config.AddTarget(fileTarget);
-                config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, "console", "*");
 
                 builder.AddNLog(config);
             });
