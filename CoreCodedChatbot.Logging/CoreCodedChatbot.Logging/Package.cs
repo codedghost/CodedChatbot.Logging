@@ -57,7 +57,7 @@ namespace CoreCodedChatbot.Logging
                         new DatabaseParameterInfo
                         {
                             Name = "@Exception",
-                            Layout = new SimpleLayout("${exception}")
+                            Layout = new SimpleLayout("${exception:format=toString,Data}")
                         },
                         new DatabaseParameterInfo
                         {
