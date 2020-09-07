@@ -4,30 +4,37 @@ using System.Text;
 using CoreCodedChatbot.Secrets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NLog;
 using NLog.Common;
 using NLog.Config;
 using NLog.Layouts;
 using NLog.Targets;
 using NLog.Web;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace CoreCodedChatbot.Logging
 {
     public static class Package
     {
-        public static IServiceCollection AddChatbotNLog(this IServiceCollection services, ISecretService secretService)
+        public static IServiceCollection AddChatbotNLog(this IServiceCollection services)
         {
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.SetMinimumLevel(LogLevel.Information);
-                var config = new LoggingConfiguration();
-                var dbTarget = new DatabaseTarget("dbLog")
+
+                builder.AddNLog((serviceProvider) =>
                 {
-                    ConnectionString = new SimpleLayout(secretService.GetSecret<string>("DbConnectionString"), ConfigurationItemFactory.Default),
-                    CommandText =
-                        "INSERT INTO LogEntry(Level, LoggedAt, Message, Logger, Callsite, Exception, StackTrace, ProcessName, AppDomain) " +
-                        "VALUES(@Level, @LoggedAt, @Message, @Logger, @Callsite, @Exception, @StackTrace, @ProcessName, @AppDomain);",
-                    Parameters =
+                    var secretService = serviceProvider.GetService<ISecretService>();
+
+                    var config = new LoggingConfiguration();
+                    var dbTarget = new DatabaseTarget("dbLog")
+                    {
+                        ConnectionString = new SimpleLayout(secretService.GetSecret<string>("DbConnectionString"), ConfigurationItemFactory.Default),
+                        CommandText =
+                            "INSERT INTO LogEntry(Level, LoggedAt, Message, Logger, Callsite, Exception, StackTrace, ProcessName, AppDomain) " +
+                            "VALUES(@Level, @LoggedAt, @Message, @Logger, @Callsite, @Exception, @StackTrace, @ProcessName, @AppDomain);",
+                        Parameters =
                     {
                         new DatabaseParameterInfo
                         {
@@ -75,15 +82,16 @@ namespace CoreCodedChatbot.Logging
                             Layout = new SimpleLayout("${appdomain}")
                         }
                     },
-                    DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"
-                };
+                        DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"
+                    };
 
-                InternalLogger.LogToConsoleError = true;
+                    InternalLogger.LogToConsoleError = true;
 
-                config.AddTarget(dbTarget);
-                config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, "dbLog", "*");
+                    config.AddTarget(dbTarget);
+                    config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, "dbLog", "*");
 
-                builder.AddNLog(config);
+                    return new LogFactory(config);
+                });
             });
 
             return services;
