@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using CoreCodedChatbot.Secrets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -90,7 +88,11 @@ namespace CoreCodedChatbot.Logging
                     config.AddTarget(dbTarget);
                     config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, "dbLog", "*");
 
-                    return new LogFactory(config);
+                    var logFactory = new LogFactory();
+                    logFactory.Configuration = config;
+                    logFactory.ReconfigExistingLoggers();
+
+                    return logFactory;
                 });
             });
 
