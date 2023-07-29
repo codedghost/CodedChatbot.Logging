@@ -86,7 +86,7 @@ namespace CoreCodedChatbot.Logging
                     InternalLogger.LogToConsoleError = true;
 
                     config.AddTarget(dbTarget);
-                    config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, "dbLog", "*");
+                    config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, "dbLog", "*");
 
                     var logFactory = new LogFactory();
                     logFactory.Configuration = config;
